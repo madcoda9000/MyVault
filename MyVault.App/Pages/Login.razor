@@ -1,53 +1,124 @@
 ﻿@page "/login"
+@layout AuthLayout
 @inject AuthService AuthService
 @inject IBlazoredTokenStore TokenStore
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
-<h3>Login</h3>
+@if (isMobile.HasValue && isMobile.Value)
+{
+    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+}
+else
+{
+    <FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center"
+        VerticalAlignment="VerticalAlignment.Center" Style="background: var(--fluent-background, #f5f7fa)">
+        <FluentCard Class="p-8" Width="380px">
+            <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch"
+                HorizontalAlignment="HorizontalAlignment.Stretch">
+                <img src="images/Logo_small.png" alt="MyVault Logo"
+                    style="margin-bottom:15px; width: 130px; height: auto;" />
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <FluentStack Gap="12" Orientation="Orientation.Vertical"
+                        HorizontalAlignment="HorizontalAlignment.Stretch">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+                        <FluentTextField Id="_username" @bind-Value="loginModel.Username" Label="Username" Required="true"
+                            Placeholder="Enter your username">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
 
-    <div class="mb-2">
-        <label for="username">Username:</label>
-        <InputText id="username" @bind-Value="loginModel.Username" class="form-control" />
-    </div>
-    <div class="mb-2">
-        <label for="password">Password:</label>
-        <InputText id="password" type="password" @bind-Value="loginModel.Password" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <p class="text-danger mt-2">@errorMessage</p>
-    }
-</EditForm>
+                        <FluentTextField Id="_password" @bind-Value="loginModel.Password" Label="Password" Required="true"
+                            Placeholder="Please enter your Password" Type="password">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;"
+                        HorizontalAlignment="HorizontalAlignment.End">
+                        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                            Style="min-width: 130px;margin-top:10px;">
+                            @if (isLoading)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" Gap="8"
+                                    VerticalAlignment="VerticalAlignment.Center">
+                                    <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                    <span>Verifying...</span>
+                                </FluentStack>
+                            }
+                            else
+                            {
+                                <span>Login</span>
+                            }
+                        </FluentButton>
+                    </FluentStack>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p class="text-danger mt-2">@errorMessage</p>
+                    }
+                </EditForm>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
 
 @code {
     private LoginModel loginModel = new();
     private string? errorMessage;
+    private bool isLoading = false;
+    private bool? isMobile;
 
+    protected override async Task OnInitializedAsync()
+    {
+        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+    }
     private async Task HandleLogin()
     {
         errorMessage = null;
-        var apiResult = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
-
-        if (apiResult != null && apiResult.Success && apiResult.Data is { } data)
+        if (loginModel == null || string.IsNullOrEmpty(loginModel.Username) || string.IsNullOrEmpty(loginModel.Password))
         {
-            await TokenStore.SetTokensAsync(data.access_token, data.refresh_token);
-
-            var accessToken = await TokenStore.GetAccessTokenAsync();
-            if (AuthStateProvider is JwtAuthenticationStateProvider jwtProvider && !string.IsNullOrEmpty(accessToken))
-            {
-                jwtProvider.NotifyUserAuthentication(accessToken);
-            }
-            Navigation.NavigateTo("/", true);
+            errorMessage = "Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein.";
+            return;
         }
-        else
+
+        isLoading = true;
+        StateHasChanged(); // sofort UI-Update
+
+
+        try
         {
-            errorMessage = apiResult?.Message ?? "Login fehlgeschlagen.";
+            await Task.Delay(500);
+            var apiResult = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+
+            if (apiResult != null && apiResult.Success && apiResult.Data is { } data)
+            {
+                if (data.access_token == null || data.refresh_token == null)
+                {
+                    errorMessage = "Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.";
+                    return;
+                }
+                await TokenStore.SetTokensAsync(data.access_token, data.refresh_token);
+
+                var accessToken = await TokenStore.GetAccessTokenAsync();
+                if (AuthStateProvider is JwtAuthenticationStateProvider jwtProvider && !string.IsNullOrEmpty(accessToken))
+                {
+                    jwtProvider.NotifyUserAuthentication(accessToken);
+                }
+                Navigation.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = apiResult?.Message ?? "Login fehlgeschlagen.";
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
+
 }

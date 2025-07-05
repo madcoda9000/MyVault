@@ -27,8 +27,13 @@ namespace MyVault.App.Services
             var apiResult = await response.Content.ReadFromJsonAsync<ApiResponse<TokenResponse>>();
             if (apiResult is { Success: true, Data: var data })
             {
-                await _tokenStore.SetTokensAsync(data.access_token, data.refresh_token);
-                return true;
+                if (data!= null && !string.IsNullOrEmpty(data.access_token) && !string.IsNullOrEmpty(data.refresh_token)) {
+                    await _tokenStore.SetTokensAsync(data.access_token, data.refresh_token);
+                    return true;
+                } else {
+                    return false;
+                }
+                
             }
             return false;
         }

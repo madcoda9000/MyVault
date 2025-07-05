@@ -1,8 +1,9 @@
-using Blazored.SessionStorage;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.FluentUI.AspNetCore.Components;
 using MyVault.App;
+using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 using MyVault.App.Services;
 using MyVault.App.Utils;
 
@@ -17,13 +18,13 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ITokenRefresher, TokenRefresher>();
 builder.Services.AddTransient<AuthRetryHandler>();
 
-// API Client mit Handler für App Requests
+// API Client mit Handler fï¿½r App Requests
 builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5206");
 }).AddHttpMessageHandler<AuthRetryHandler>();
 
-// AuthClient für TokenRefresher, ohne Handler!
+// AuthClient fï¿½r TokenRefresher, ohne Handler!
 builder.Services.AddHttpClient("AuthClient", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5206");
@@ -31,5 +32,6 @@ builder.Services.AddHttpClient("AuthClient", client =>
 
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 builder.Services.AddAuthorizationCore();
+builder.Services.AddFluentUIComponents();
 
 await builder.Build().RunAsync();

@@ -1,3 +1,127 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.FluentUI.AspNetCore.Components.Extensions
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 
-@Body
+<FluentMenuProvider />
+
+<FluentDesignTheme @bind-Mode="@Mode" @bind-OfficeColor="@OfficeColor" OnLoaded="@OnLoaded" OnLuminanceChanged="@OnLuminanceChanged" StorageName="theme" />
+<FluentLayout>
+    <FluentHeader Class="siteheader">
+        MyVault.App
+        <FluentSpacer />
+        @if (isMobile != true)
+        {
+        <FluentGrid>        
+            <FluentGridItem>
+                <FluentSelect Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))" Width="150px" Height="300px" @bind-SelectedOption="@OfficeColor">
+                    <OptionTemplate>  
+                        <FluentStack>
+                            <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())" Color="Color.Custom" CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4" )" />
+                            <FluentLabel>@context</FluentLabel>  
+                        </FluentStack>
+                    </OptionTemplate> 
+                </FluentSelect>
+            </FluentGridItem>
+            <FluentGridItem>
+                <div style="display:flex;align-items:center;height:100%;">
+                    @if (Mode == DesignThemeModes.Dark)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.WeatherMoon())" OnClick="ToggleTheme" Style="cursor: pointer; height: 24px; width: 24px;" />
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.WeatherSunny())" OnClick="ToggleTheme" Style="cursor: pointer; height: 24px; width: 24px;" />
+                    }
+                </div>
+            </FluentGridItem>
+            <FluentGridItem>
+                <FluentPersona Initials="LB" ImageSize="32px" id="btnOpen1" @onclick="@(() => open = !open)"></FluentPersona>
+                <FluentMenu Anchor="btnOpen1" @bind-Open="open" @onmenuchange=OnMenuChange VerticalThreshold="170">
+                    <FluentMenuItem>
+                        Menu item 1
+                    </FluentMenuItem>
+                    <FluentMenuItem>
+                        Menu item 2 Checked
+                    </FluentMenuItem>
+                    <FluentMenuItem>
+                        Menu item 3 Disabled
+                    </FluentMenuItem>
+                    <FluentMenuItem OnClick="doLogout">
+                        <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Key())" Color="Color.Neutral" Slot="start" /></span>
+                        Logout
+                    </FluentMenuItem>
+                </FluentMenu>
+            </FluentGridItem>
+        </FluentGrid>
+        }
+    </FluentHeader>
+    <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
+        <NavMenu />
+        <FluentBodyContent Class="body-content">
+            <ErrorBoundary>
+                <ChildContent>
+                    <div class="content">
+                        @Body
+                    </div>
+                </ChildContent>
+                <ErrorContent Context="ex">
+                    <div class="blazor-error-boundary">@ex.Message</div>
+                </ErrorContent>
+            </ErrorBoundary>
+        </FluentBodyContent>
+    </FluentStack>
+    @if (isMobile != true)
+    {
+    <FluentFooter>
+        <a href="https://www.fluentui-blazor.net" target="_blank">Documentation and demos</a>
+        <FluentSpacer />
+        <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor" target="_blank">About Blazor</a>
+    </FluentFooter>
+    }
+</FluentLayout>
+
+@code
+{
+    public DesignThemeModes Mode { get; set; }
+    public OfficeColor? OfficeColor { get; set; }
+    private bool? isMobile;
+    private bool open = false;
+    protected override async Task OnInitializedAsync()
+    {
+        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+    }
+
+    private async Task doLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void OnMenuChange(MenuChangeEventArgs args)
+    {
+       
+    }
+
+    void OnLoaded(LoadedEventArgs e)
+    {
+        //DemoLogger.WriteLine($"Loaded: {(e.Mode == DesignThemeModes.System ? "System" : "")} {(e.IsDark ? "Dark" : "Light")}");
+    }
+
+    void OnLuminanceChanged(LuminanceChangedEventArgs e)
+    {
+        //DemoLogger.WriteLine($"Changed: {(e.Mode == DesignThemeModes.System ? "System" : "")} {(e.IsDark ? "Dark" : "Light")}");
+    }
+
+    void PickRandomColor()
+    {
+        OfficeColor = OfficeColorUtilities.GetRandom();
+    }
+
+    private void ToggleTheme()
+    {
+        Mode = Mode == DesignThemeModes.Dark ? DesignThemeModes.Light : DesignThemeModes.Dark;
+    }
+
+}

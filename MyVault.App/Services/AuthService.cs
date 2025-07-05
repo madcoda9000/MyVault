@@ -31,6 +31,11 @@ namespace MyVault.App.Services
             // Wenn Login erfolgreich: Tokens speichern
             if (apiResult?.Success == true && apiResult.Data is { } data)
             {
+                if (data.access_token == null || data.refresh_token == null)
+                {
+                    return new ApiResponse<TokenResponse> { Success = false, Message = "Login failed. Please check your credentials." };
+                    
+                }
                 await _tokenStore.SetTokensAsync(data.access_token, data.refresh_token);
             }
 
@@ -59,6 +64,10 @@ namespace MyVault.App.Services
 
             if (apiResult?.Success == true && apiResult.Data is { } data)
             {
+                if(data.access_token == null || data.refresh_token == null)
+                {
+                    return new ApiResponse<TokenResponse> { Success = false, Message = "Token refresh failed." };
+                }
                 await _tokenStore.SetTokensAsync(data.access_token, data.refresh_token);
             }
 

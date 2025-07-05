@@ -1,0 +1,107 @@
+@page "/login2"
+@using System.ComponentModel.DataAnnotations
+
+
+
+<FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center"
+    VerticalAlignment="VerticalAlignment.Center" Style="background: var(--fluent-background, #f5f7fa)">
+    <FluentCard Class="p-8" Width="380px">
+        <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch"
+            HorizontalAlignment="HorizontalAlignment.Stretch">
+            <img src="images/Logo_small.png" alt="MyVault Logo"
+                style="margin-bottom:15px; width: 130px; height: auto;" />
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <FluentStack Gap="12" Orientation="Orientation.Vertical"
+                    HorizontalAlignment="HorizontalAlignment.Stretch">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <FluentTextField Id="_username" @bind-Value="loginModel.Username" Label="Username" Required="true"
+                        Placeholder="Enter your username">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
+                    </FluentTextField>
+
+                    <FluentTextField Id="_password" @bind-Value="loginModel.Password" Label="Password" Required="true"
+                        Placeholder="Please enter your Password" Type="password">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                    </FluentTextField>
+                </FluentStack>
+
+                <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;"
+                    HorizontalAlignment="HorizontalAlignment.End">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                        Style="min-width: 130px;margin-top:10px;">
+                        @if (isLoading)
+                        {
+                            <FluentStack Orientation="Orientation.Horizontal" Gap="8"
+                                VerticalAlignment="VerticalAlignment.Center">
+                                <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                <span>Verifying...</span>
+                            </FluentStack>
+                        }
+                        else
+                        {
+                            <span>Login</span>
+                        }
+                    </FluentButton>
+                </FluentStack>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="text-danger mt-2">@errorMessage</p>
+                }
+            </EditForm>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    private LoginModel2 loginModel = new();
+    private string? errorMessage;
+    private bool isLoading = false;
+
+    private class LoginModel2
+    {
+        /// <summary>
+        /// username property
+        /// </summary>
+        /// <value></value>
+        [Required(ErrorMessage = "User Name is required")]
+        public string? Username { get; set; }
+
+        /// <summary>
+        /// password property
+        /// </summary>
+        /// <value></value>
+        [Required(ErrorMessage = "Password is required")]
+        public string? Password { get; set; }
+    }
+
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        if (loginModel == null || string.IsNullOrEmpty(loginModel.Username) || string.IsNullOrEmpty(loginModel.Password))
+        {
+            errorMessage = "Bitte geben Sie Ihren Benutzernamen und Ihr Passwort ein.";
+            return;
+        }
+
+        isLoading = true;
+        StateHasChanged(); // sofort UI-Update
+
+
+        try
+        {
+            await Task.Delay(500);
+            errorMessage = "Login successful";
+            return; // Simulate successful login
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+}

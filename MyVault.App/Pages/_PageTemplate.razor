@@ -1,0 +1,26 @@
+@page "/pageTemplate"
+@layout MainLayout
+@inject AuthService AuthService
+@inject IBlazoredTokenStore TokenStore
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@if (isMobile.HasValue && isMobile.Value)
+{
+    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+}
+else
+{
+
+}
+
+@code {
+    private bool isLoading = false;
+    private bool? isMobile;
+    protected override async Task OnInitializedAsync()
+    {
+        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+    }
+
+}

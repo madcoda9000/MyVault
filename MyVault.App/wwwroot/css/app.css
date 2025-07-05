@@ -1,14 +1,98 @@
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+@import '../_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css';
+
+:root {
+    --fluent-border-radius: 0px !important;
+    --fluent-card-border-radius: 0px !important;
+    --fluent-control-corner-radius: 0px !important;
+    --control-corner-radius: 0px !important;
+    --corner-radius: 0px !important;
+    --border-radius: 0px !important;
+}
+fluent-card {
+    border-radius: 2px !important;
+}
+#AuthStack {
+    background: var(--accent-fill-active) !important;
 }
 
-.invalid {
-    outline: 1px solid red;
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    min-height: 100vh;
+    width: 100vw;
+    font-family: var(--body-font);
+    font-size:   var(--type-ramp-base-font-size);
+    line-height: var(--type-ramp-base-line-height);
+    font-weight: var(--font-weight);
+    color:       var(--neutral-foreground-rest);
+    background:  var(--neutral-fill-layer-rest);
 }
 
-.validation-message {
-    color: red;
+.siteheader {
+        background-color: var(--neutral-layer-4) !important;
+    border-bottom: calc(var(--stroke-width) * 2px) solid var(--accent-fill-rest);
+    margin-bottom: 0 !important;
 }
+
+.navmenu-icon {
+    display: none;
+}
+
+.main {
+    min-height: calc(100dvh - 86px);
+    color: var(--neutral-foreground-rest);
+    align-items: stretch !important;
+}
+
+.body-content {
+    align-self: stretch;
+    height: calc(100dvh - 86px) !important;
+    display: flex;
+}
+
+.auth-background {
+    min-height: 100vh;
+    height: 100vh;
+    width: 100vw;
+    background: var(--accent-fill-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    padding: 0.5rem 1.5rem;
+    align-self: stretch !important;
+    width: 100%;
+}
+
+footer {
+    background: var(--neutral-layer-4);
+    color: var(--neutral-foreground-rest);
+    align-items: center;
+    padding: 10px 10px;
+}
+
+    footer a {
+        color: var(--neutral-foreground-rest);
+        text-decoration: none;
+    }
+
+        footer a:focus {
+            outline: 1px dashed;
+            outline-offset: 3px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+.alert {
+    border: 1px dashed var(--accent-fill-rest);
+    padding: 5px;
+}
+
 
 #blazor-error-ui {
     background: lightyellow;
@@ -20,6 +104,7 @@
     position: fixed;
     width: 100%;
     z-index: 1000;
+    margin: 20px 0;
 }
 
     #blazor-error-ui .dismiss {
@@ -35,8 +120,8 @@
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
+    .blazor-error-boundary::before {
+        content: "An error has occurred. "
     }
 
 .loading-progress {
@@ -74,4 +159,66 @@
 
 code {
     color: #c02d76;
+}
+
+@media (max-width: 600px) {
+    .header-gutters {
+        margin: 0.5rem 3rem 0.5rem 1.5rem !important;
+    }
+
+    [dir="rtl"] .header-gutters {
+        margin: 0.5rem 1.5rem 0.5rem 3rem !important;
+    }
+
+    .main {
+        flex-direction: column !important;
+        row-gap: 0 !important;
+    }
+
+    nav.sitenav {
+        width: 100%;
+        height: 100%;
+    }
+
+    #main-menu {
+        width: 100% !important;
+    }
+
+        #main-menu > div:first-child:is(.expander) {
+            display: none;
+        }
+
+    .navmenu {
+        width: 100%;
+    }
+
+    #navmenu-toggle {
+        appearance: none;
+    }
+
+        #navmenu-toggle ~ nav {
+            display: none;
+        }
+
+        #navmenu-toggle:checked ~ nav {
+            display: block;
+        }
+
+    .navmenu-icon {
+        cursor: pointer;
+        z-index: 10;
+        display: block;
+        position: absolute;
+        top: 15px;
+        left: unset;
+        right: 20px;
+        width: 20px;
+        height: 20px;
+        border: none;
+    }
+
+    [dir="rtl"] .navmenu-icon {
+        left: 20px;
+        right: unset;
+    }
 }

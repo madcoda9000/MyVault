@@ -1,0 +1,38 @@
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+@if (!_checked)
+{
+    <!-- Zeige einen Ladeindikator oder gar nichts -->
+    <div style="height:100vh;display:flex;align-items:center;justify-content:center;">
+        <FluentProgressRing style="width: 82px; height: 82px;"></FluentProgressRing>
+    </div>
+}
+
+@code {
+    private bool _checked = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLowerInvariant();
+
+        var openRoutes = new[]
+        {
+            "login", "register", "forgot_password", "set_password", "verify_mfa"
+        };
+
+        // Falls offen oder authentifiziert: Seite anzeigen
+        if (user.Identity?.IsAuthenticated == true ||
+            openRoutes.Any(p => uri.StartsWith(p)))
+        {
+            _checked = true; // jetzt Child-Komponenten rendern
+            StateHasChanged();
+            return;
+        }
+
+        // Ansonsten redirect (Ladeanzeige bleibt stehen, Seite wird nicht mehr gerendert)
+        Navigation.NavigateTo("/login", true);
+    }
+}
