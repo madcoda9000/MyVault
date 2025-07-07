@@ -1,0 +1,102 @@
+@page "/confirm-email/{UserId?}/{Token?}"
+@layout AuthLayout
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager Navigation
+
+<FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+    <FluentCard Class="p-8" Width="420px">
+        <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch"
+                     HorizontalAlignment="HorizontalAlignment.Stretch">
+            <img src="images/Logo_small.png" alt="MyVault Logo"
+                 style="margin-bottom:15px; width: 130px; height: auto;" />
+            <h3 class="text-center">E-Mail Bestätigung</h3>
+
+            @if (isLoading)
+            {
+                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
+                    <FluentProgressRing Style="width:24px;height:24px;" />
+                    <span class="ml-2">Bestätige E-Mail Adresse ...</span>
+                </FluentStack>
+            }
+            else if (!string.IsNullOrEmpty(successMessage))
+            {
+                <p class="text-success">@((MarkupString)successMessage)</p>
+                <FluentButton Appearance="Appearance.Accent" OnClick="NavigateLogin" Style="margin-top:15px;">
+                    Weiter zum Login
+                </FluentButton>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="text-danger">@errorMessage</p>
+                <FluentButton Appearance="Appearance.Neutral" OnClick="NavigateLogin" Style="margin-top:15px;">
+                    Zurück zum Login
+                </FluentButton>
+            }
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    [Parameter] public string? UserId { get; set; }
+    [Parameter] public string? Token { get; set; }
+
+    [SupplyParameterFromQuery] public string? userIdFromQuery { get; set; }
+    [SupplyParameterFromQuery] public string? tokenFromQuery { get; set; }
+
+    private bool isLoading = true;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private HttpClient ApiClient => ClientFactory.CreateClient("ApiClient");
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Falls Parameter in Route nicht gesetzt sind, dann Query-Werte nehmen
+        var effectiveUserId = UserId ?? userIdFromQuery;
+        var effectiveToken = Token ?? tokenFromQuery;
+
+        if (string.IsNullOrWhiteSpace(effectiveUserId) || string.IsNullOrWhiteSpace(effectiveToken))
+        {
+            errorMessage = "Ungültiger Bestätigungslink.";
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            var url = $"/api/Authenticate/confirmEmail?userId={Uri.EscapeDataString(effectiveUserId)}&token={Uri.EscapeDataString(effectiveToken)}";
+            var response = await ApiClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResp = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                if (apiResp is { Success: true })
+                {
+                    successMessage = apiResp.Message ?? "E-Mail erfolgreich bestätigt! Du kannst dich jetzt anmelden.";
+                }
+                else
+                {
+                    errorMessage = apiResp?.Message ?? "E-Mail Bestätigung fehlgeschlagen!";
+                }
+            }
+            else
+            {
+                errorMessage = "E-Mail Bestätigung fehlgeschlagen (Serverfehler).";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "E-Mail Bestätigung fehlgeschlagen: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

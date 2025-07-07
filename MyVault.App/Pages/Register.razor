@@ -1,0 +1,174 @@
+@page "/register"
+@layout AuthLayout
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject IHttpClientFactory ClientFactory
+
+@if (isMobile.HasValue && isMobile.Value)
+{
+    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+}
+else
+{
+    <FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center"
+        Style="background: var(--fluent-background, #f5f7fa)">
+        <FluentCard Class="p-8" Width="380px">
+            <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" HorizontalAlignment="HorizontalAlignment.Stretch">
+                <img src="images/Logo_small.png" alt="MyVault Logo" style="margin-bottom:15px; width: 130px; height: auto;" />
+                <EditForm Model="@registerModel" OnValidSubmit="@(async () => await HandleRegister())">
+                    <FluentStack Gap="12" Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Stretch">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <FluentTextField @bind-Value="registerModel.Username" Label="Username" Required="true" Placeholder="Enter your username">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                        <FluentTextField @bind-Value="registerModel.Email" Label="Email" Required="true" Placeholder="Enter your email" Type="email">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                        <FluentTextField @bind-Value="registerModel.Password"
+                                        Label="Password" Required="true"
+                                        Placeholder="Create a password"
+                                        Type="@(_showPassword ? "text" : "password")">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                            <FluentStack Orientation="Orientation.Horizontal" Gap="4" Slot="end">
+                                <FluentIcon
+                                    Value=@((Icon)(_showPassword ? new Icons.Regular.Size16.EyeOff() : new Icons.Regular.Size16.Eye()))
+                                    Style="cursor:pointer"
+                                    Title=@(_showPassword ? "Hide password" : "Show password")
+                                    OnClick="@ToggleShowPassword" />
+
+                                <FluentIcon
+                                    Value="@(new Icons.Regular.Size16.Wand())"
+                                    Style="cursor:pointer"
+                                    Title="Generate password"
+                                    OnClick="@GeneratePassword" />
+                            </FluentStack>
+                        </FluentTextField>
+
+                        <FluentTextField @bind-Value="registerModel.Firstname" Label="Firstname" Required="true" Placeholder="Enter your firstname">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.ContactCard())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                        <FluentTextField @bind-Value="registerModel.Lastname" Label="Lastname" Required="true" Placeholder="Enter your lastname">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.ContactCard())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="8" HorizontalAlignment="HorizontalAlignment.End" Style="margin-top:18px;">
+                        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                            Style="min-width: 130px;">
+                            @if (isLoading)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" Gap="8" VerticalAlignment="VerticalAlignment.Center">
+                                    <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                    <span>Registering...</span>
+                                </FluentStack>
+                            }
+                            else
+                            {
+                                <span>Register</span>
+                            }
+                        </FluentButton>
+                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@(() => Navigation.NavigateTo("/login"))">
+                            Back to Login
+                        </FluentButton>
+                    </FluentStack>
+
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p class="text-danger mt-2">@((MarkupString)errorMessage)</p>
+                    }
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <p class="text-success mt-2">@((MarkupString)successMessage)</p>
+                    }
+                </EditForm>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
+
+@code {
+    private RegisterModel registerModel = new();
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = false;
+    private bool _showPassword = false;
+    private bool? isMobile;
+    private HttpClient ApiClient => ClientFactory.CreateClient("ApiClient");
+
+    protected override async Task OnInitializedAsync()
+    {
+        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+    }
+
+    private void ToggleShowPassword()
+    {
+        _showPassword = !_showPassword;
+    }
+
+    private void GeneratePassword()
+    {
+        // Simple Beispiel, besser: eigenen Generator oder Lib nehmen!
+        var rand = new Random();
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@$!%*?&#";
+        registerModel.Password = new string(Enumerable.Repeat(chars, 14)
+            .Select(s => s[rand.Next(s.Length)]).ToArray());
+    }
+
+    private async Task HandleRegister()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (registerModel == null ||
+            string.IsNullOrWhiteSpace(registerModel.Username) ||
+            string.IsNullOrWhiteSpace(registerModel.Password) ||
+            string.IsNullOrWhiteSpace(registerModel.Email) ||
+            string.IsNullOrWhiteSpace(registerModel.Firstname) ||
+            string.IsNullOrWhiteSpace(registerModel.Lastname))
+        {
+            errorMessage = "Please fill out all required fields.";
+            return;
+        }
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Endpunkt ggf. anpassen!
+            var response = await ApiClient.PostAsJsonAsync("/api/Authenticate/register", registerModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Erwartet: ApiResponse<bool>
+                var apiResp = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                if (apiResp is { Success: true })
+                {
+                    successMessage = apiResp.Message ?? "Registration successful! Please check your email.";
+                    await Task.Delay(1800);
+                    Navigation.NavigateTo("/login?registered=1", true);
+                }
+                else
+                {
+                    errorMessage = apiResp?.Message ?? "Registration failed.";
+                }
+            }
+            else
+            {
+                errorMessage = "Registration failed (network/server error).";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Registration failed: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -8,60 +8,148 @@
 
 @if (isMobile.HasValue && isMobile.Value)
 {
-    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="min-height: 100vh; padding: 16px;">
+        <FluentStack Id="AuthStackMobile" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="width: 100%;">
+            <div class="mobile-login-container"> @* Using a div for more flexible styling on mobile *@
+                <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" HorizontalAlignment="HorizontalAlignment.Stretch">
+                    <img src="images/Logo_small.png" alt="MyVault Logo"
+                         style="margin-bottom:15px; width: 130px; height: auto; align-self: center;" /> @* Center logo for mobile *@
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <FluentStack Gap="12" Orientation="Orientation.Vertical"
+                                     HorizontalAlignment="HorizontalAlignment.Stretch">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <FluentTextField Id="_username_mobile" @bind-Value="loginModel.Username" Label="Username" Required="true"
+                                             Placeholder="Enter your username" Immediate="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
+                            </FluentTextField>
+
+                            <FluentTextField Id="_password_mobile" @bind-Value="loginModel.Password" Label="Password" Required="true"
+                                             Placeholder="Please enter your Password" Type="password" Immediate="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                            </FluentTextField>
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;"
+                                     HorizontalAlignment="HorizontalAlignment.End">
+                            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                                          Style="width: 100%; margin-top:10px;"> @* Full width button for mobile *@
+                                @if (isLoading)
+                                {
+                                    <FluentStack Orientation="Orientation.Horizontal" Gap="8"
+                                                 VerticalAlignment="VerticalAlignment.Center">
+                                        <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                        <span>Verifying...</span>
+                                    </FluentStack>
+                                }
+                                else
+                                {
+                                    <span>Login</span>
+                                }
+                            </FluentButton>
+                        </FluentStack>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <p class="text-danger mt-2">@errorMessage</p>
+                        }
+                    </EditForm>
+                </FluentStack>
+            </div>
+        </FluentStack>
+
+        <div style="height: 15px;"></div>
+
+        <FluentStack Id="AuthFooterStackMobile" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Stretch" Style="width: 100%;">
+            <div class="mobile-footer-container"> @* Using a div for more flexible styling on mobile *@
+                <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" HorizontalAlignment="HorizontalAlignment.Stretch" Gap="8">
+                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Left" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Person())" Color="Color.Neutral" />
+                        <span>Noch keinen Account? <a href="/register">Registrieren</a></span>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Left" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Key())" Color="Color.Neutral" />
+                        <span>Passwort vergessen? <a href="/ResetPw">Zurücksetzen..</a></span>
+                    </FluentStack>
+                </FluentStack>
+            </div>
+        </FluentStack>
+
+    </FluentStack>
 }
 else
 {
-    <FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center"
-        VerticalAlignment="VerticalAlignment.Center" Style="background: var(--fluent-background, #f5f7fa)">
-        <FluentCard Class="p-8" Width="380px">
-            <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch"
-                HorizontalAlignment="HorizontalAlignment.Stretch">
-                <img src="images/Logo_small.png" alt="MyVault Logo"
-                    style="margin-bottom:15px; width: 130px; height: auto;" />
-                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-                    <FluentStack Gap="12" Orientation="Orientation.Vertical"
-                        HorizontalAlignment="HorizontalAlignment.Stretch">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
+    <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="min-height: 100vh;">
+        <FluentStack Id="AuthStack" HorizontalAlignment="HorizontalAlignment.Center"
+                     VerticalAlignment="VerticalAlignment.Center" >
+            <FluentCard Class="p-8" Width="380px">
+                <FluentStack Gap="16" Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch"
+                             HorizontalAlignment="HorizontalAlignment.Stretch">
+                    <img src="images/Logo_small.png" alt="MyVault Logo"
+                         style="margin-bottom:15px; width: 130px; height: auto;" />
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <FluentStack Gap="12" Orientation="Orientation.Vertical"
+                                     HorizontalAlignment="HorizontalAlignment.Stretch">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
 
-                        <FluentTextField Id="_username" @bind-Value="loginModel.Username" Label="Username" Required="true"
-                            Placeholder="Enter your username">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
-                        </FluentTextField>
+                            <FluentTextField Id="_username" @bind-Value="loginModel.Username" Label="Username" Required="true"
+                                             Placeholder="Enter your username" Immediate="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Slot="start" Color="Color.Neutral" />
+                            </FluentTextField>
 
-                        <FluentTextField Id="_password" @bind-Value="loginModel.Password" Label="Password" Required="true"
-                            Placeholder="Please enter your Password" Type="password">
-                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
-                        </FluentTextField>
+                            <FluentTextField Id="_password" @bind-Value="loginModel.Password" Label="Password" Required="true"
+                                             Placeholder="Please enter your Password" Type="password" Immediate="true">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                            </FluentTextField>
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;"
+                                     HorizontalAlignment="HorizontalAlignment.End">
+                            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                                          Style="min-width: 130px;margin-top:10px;">
+                                @if (isLoading)
+                                {
+                                    <FluentStack Orientation="Orientation.Horizontal" Gap="8"
+                                                 VerticalAlignment="VerticalAlignment.Center">
+                                        <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                        <span>Verifying...</span>
+                                    </FluentStack>
+                                }
+                                else
+                                {
+                                    <span>Login</span>
+                                }
+                            </FluentButton>
+                        </FluentStack>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <p class="text-danger mt-2">@errorMessage</p>
+                        }
+                    </EditForm>
+                </FluentStack>
+            </FluentCard>
+        </FluentStack>
+
+        <div style="height: 15px;"></div>
+
+        <FluentStack Id="AuthFooterStack" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Stretch">
+            <FluentCard Class="p-2" Width="380px">
+                <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Stretch" HorizontalAlignment="HorizontalAlignment.Stretch" Gap="8">
+                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Left" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Person())" Color="Color.Neutral" />
+                        <span>Noch keinen Account? <a href="/register">Registrieren</a></span>
                     </FluentStack>
-
-                    <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;"
-                        HorizontalAlignment="HorizontalAlignment.End">
-                        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
-                            Style="min-width: 130px;margin-top:10px;">
-                            @if (isLoading)
-                            {
-                                <FluentStack Orientation="Orientation.Horizontal" Gap="8"
-                                    VerticalAlignment="VerticalAlignment.Center">
-                                    <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
-                                    <span>Verifying...</span>
-                                </FluentStack>
-                            }
-                            else
-                            {
-                                <span>Login</span>
-                            }
-                        </FluentButton>
+                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Left" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Key())" Color="Color.Neutral" />
+                        <span>Passwort vergessen? <a href="/reset-password">Zurücksetzen..</a></span>
                     </FluentStack>
+                </FluentStack>
+            </FluentCard>
+        </FluentStack>
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <p class="text-danger mt-2">@errorMessage</p>
-                    }
-                </EditForm>
-            </FluentStack>
-        </FluentCard>
     </FluentStack>
 }
 
@@ -73,8 +161,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+        // Sicherstellen, dass das JS-Objekt nicht null ist, bevor es aufgerufen wird.
+        if (JS != null)
+        {
+            isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+        } else {
+            // Optional: Standardwert oder Fehlerbehandlung, falls JS nicht verfügbar ist
+            isMobile = false;
+        }
     }
+
     private async Task HandleLogin()
     {
         errorMessage = null;
@@ -87,9 +183,10 @@ else
         isLoading = true;
         StateHasChanged(); // sofort UI-Update
 
-
         try
         {
+            // Eine kleine Verzögerung hinzugefügt, um den Ladezustand sichtbarer zu machen.
+            // In einer echten Anwendung könnte dies entfernt werden.
             await Task.Delay(500);
             var apiResult = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
 
@@ -97,12 +194,13 @@ else
             {
                 if (data.access_token == null || data.refresh_token == null)
                 {
-                    errorMessage = "Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.";
+                    errorMessage = "Login fehlgeschlagen. Ungültige Token erhalten."; // Spezifischere Fehlermeldung
                     return;
                 }
                 await TokenStore.SetTokensAsync(data.access_token, data.refresh_token);
 
                 var accessToken = await TokenStore.GetAccessTokenAsync();
+                // Überprüfung auf null bei jwtProvider
                 if (AuthStateProvider is JwtAuthenticationStateProvider jwtProvider && !string.IsNullOrEmpty(accessToken))
                 {
                     jwtProvider.NotifyUserAuthentication(accessToken);
@@ -111,8 +209,14 @@ else
             }
             else
             {
-                errorMessage = apiResult?.Message ?? "Login fehlgeschlagen.";
+                // Verbesserte Fehlermeldung, falls apiResult.Message leer ist
+                errorMessage = apiResult?.Message ?? "Login fehlgeschlagen. Ein unbekannter Fehler ist aufgetreten.";
             }
+        }
+        catch (Exception ex)
+        {
+            // Allgemeine Fehlerbehandlung, z.B. für Netzwerkprobleme
+            errorMessage = $"Es ist ein Fehler aufgetreten: {ex.Message}";
         }
         finally
         {
@@ -120,5 +224,4 @@ else
             StateHasChanged();
         }
     }
-
 }

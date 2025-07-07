@@ -1,0 +1,136 @@
+@page "/ResetPw2/{UserId}/{Token}"
+@page "/ResetPw2"
+@using System.ComponentModel.DataAnnotations
+@layout AuthLayout
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+@if (isMobile.HasValue && isMobile.Value)
+{
+    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+}
+else
+{
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentCard Class="p-8" Width="380px">
+            <FluentStack Gap="16" Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Stretch">
+                <img src="images/Logo_small.png" alt="MyVault Logo" style="margin-bottom:15px; width: 130px; height: auto;" />
+                <h5>Neues Passwort setzen</h5>
+                <EditForm Model="@model" OnValidSubmit="HandleResetPw2">
+                    <FluentStack Gap="12" Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Stretch">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <FluentTextField @bind-Value="model.Password" Label="Neues Passwort" Required="true" Type="@(_showPassword ? "text" : "password")" Placeholder="Neues Passwort">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" Color="Color.Neutral" />
+                            <FluentIcon Value=@((Icon)(_showPassword ? new Icons.Regular.Size16.EyeOff() : new Icons.Regular.Size16.Eye())) 
+                                Slot="end" Style="cursor:pointer" Title="Show/Hide" OnClick="@ToggleShowPassword" />
+                        </FluentTextField>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;" HorizontalAlignment="HorizontalAlignment.End">
+                        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Style="min-width: 130px;">
+                            @if (isLoading)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" Gap="8" VerticalAlignment="VerticalAlignment.Center">
+                                    <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                    <span>Speichern...</span>
+                                </FluentStack>
+                            }
+                            else
+                            {
+                                <span>Speichern</span>
+                            }
+                        </FluentButton>
+                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@(() => Navigation.NavigateTo("/login"))">
+                            Zurück zum Login
+                        </FluentButton>
+                    </FluentStack>
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <p class="@messageClass mt-2">@((MarkupString)message)</p>
+                    }
+                </EditForm>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
+
+@code {
+    [Parameter] public string? UserId { get; set; }
+    [Parameter] public string? Token { get; set; }
+    private PasswordResetModel model = new();
+    private string? message;
+    private string messageClass = "";
+    private bool isLoading = false;
+    private bool _showPassword = false;
+    private bool? isMobile;
+    private HttpClient ApiClient => ClientFactory.CreateClient("ApiClient");
+
+    protected override async Task OnInitializedAsync()
+    {
+        isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+        // URL-Parameter übernehmen, falls über /reset-password2?userId=...&token=... aufgerufen
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (string.IsNullOrEmpty(UserId) && string.IsNullOrEmpty(Token))
+        {
+            var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            UserId = q["userId"];
+            Token = q["token"];
+        }
+        model.UserId = UserId;
+        model.Token = Token;
+    }
+
+    private void ToggleShowPassword()
+        => _showPassword = !_showPassword;
+
+    private async Task HandleResetPw2()
+    {
+        message = null;
+        messageClass = "";
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (string.IsNullOrEmpty(model.UserId) || string.IsNullOrEmpty(model.Token))
+            {
+                messageClass = "text-danger";
+                message = "Ungültiger Link oder fehlende Parameter.";
+                return;
+            }
+            var response = await ApiClient.PostAsJsonAsync("/api/Authenticate/resetPw2", model);
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResp = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                if (apiResp is { Success: true })
+                {
+                    messageClass = "text-success";
+                    message = apiResp.Message ?? "Passwort erfolgreich geändert.";
+                    await Task.Delay(1200);
+                    Navigation.NavigateTo("/login?pwreset=1", true);
+                }
+                else
+                {
+                    messageClass = "text-danger";
+                    message = apiResp?.Message ?? "Fehler beim Speichern.";
+                }
+            }
+            else
+            {
+                messageClass = "text-danger";
+                message = "Serverfehler beim Speichern.";
+            }
+        }
+        catch (Exception ex)
+        {
+            messageClass = "text-danger";
+            message = "Fehler: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

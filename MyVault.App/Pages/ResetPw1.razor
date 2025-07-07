@@ -1,0 +1,115 @@
+@page "/ResetPw"
+@using System.ComponentModel.DataAnnotations
+@layout AuthLayout
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+@if (isMobile.HasValue && isMobile.Value)
+{
+    <p class="text-center mt-4">Die mobile Ansicht ist noch in Arbeit. Bitte nutzen Sie die Desktop-Version.</p>
+}
+else
+{
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+        <FluentCard Class="p-8" Width="380px">
+            <FluentStack Gap="16" Orientation="Orientation.Vertical">
+                <img src="images/Logo_small.png" alt="MyVault Logo" style="margin-bottom:15px; width: 130px; height: auto;" />
+                <h5>Passwort zurücksetzen</h5>
+                <EditForm Model="@model" OnValidSubmit="HandleResetPw1">
+                    <FluentStack Gap="12" Orientation="Orientation.Vertical"  HorizontalAlignment="HorizontalAlignment.Stretch">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <FluentTextField @bind-Value="model.Email" Label="E-Mail" Required="true" Placeholder="E-Mail-Adresse eingeben" Type="email">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Slot="start" Color="Color.Neutral" />
+                        </FluentTextField>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal" Gap="8" Style="margin-top:18px;" HorizontalAlignment="HorizontalAlignment.End">
+                        <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Style="min-width: 130px;">
+                            @if (isLoading)
+                            {
+                                <FluentStack Orientation="Orientation.Horizontal" Gap="8" VerticalAlignment="VerticalAlignment.Center">
+                                    <FluentProgressRing Style="width:18px;height:18px;" Color="#ffffff" />
+                                    <span>Absenden...</span>
+                                </FluentStack>
+                            }
+                            else
+                            {
+                                <span>Zurücksetzen</span>
+                            }
+                        </FluentButton>
+                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="@(() => Navigation.NavigateTo("/login"))">
+                            Zurück zum Login
+                        </FluentButton>
+                    </FluentStack>
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <p class="@messageClass mt-2">@((MarkupString)message)</p>
+                    }
+                </EditForm>
+            </FluentStack>
+        </FluentCard>
+    </FluentStack>
+}
+
+@code {
+    private ResetPw1Model model = new();
+    private string? message;
+    private string messageClass = "";
+    private bool isLoading = false;
+    private bool? isMobile;
+
+    private HttpClient ApiClient => ClientFactory.CreateClient("ApiClient");
+
+    protected override async Task OnInitializedAsync()
+        => isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+
+    private async Task HandleResetPw1()
+    {
+        message = null;
+        messageClass = "";
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ApiClient.GetAsync($"/api/Authenticate/resetPw1?email={Uri.EscapeDataString(model.Email ?? "")}");
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResp = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+                if (apiResp is { Success: true })
+                {
+                    messageClass = "text-success";
+                    message = apiResp.Message ?? "Falls die E-Mail existiert, wurde eine Nachricht gesendet.";
+                }
+                else
+                {
+                    messageClass = "text-danger";
+                    message = apiResp?.Message ?? "Fehler beim Zurücksetzen.";
+                }
+            }
+            else
+            {
+                messageClass = "text-danger";
+                message = "Serverfehler beim Zurücksetzen.";
+            }
+        }
+        catch (Exception ex)
+        {
+            messageClass = "text-danger";
+            message = "Fehler: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Model (optional, falls nicht global importiert)
+    public class ResetPw1Model
+    {
+        [Required, EmailAddress]
+        public string? Email { get; set; }
+    }
+}

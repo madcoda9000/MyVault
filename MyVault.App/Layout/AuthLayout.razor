@@ -1,10 +1,22 @@
 @inherits LayoutComponentBase
 
+<FluentDesignTheme @bind-Mode="@Mode" @bind-OfficeColor="@OfficeColor" OnLoaded="@OnLoaded" OnLuminanceChanged="@OnLuminanceChanged" StorageName="theme" />
 
 <div class="auth-background">
     @Body
 </div>
 
 @code {
+ public DesignThemeModes Mode { get; set; }
+    public OfficeColor? OfficeColor { get; set; }
 
+    void OnLoaded(LoadedEventArgs e)
+    {
+        //DemoLogger.WriteLine($"Loaded: {(e.Mode == DesignThemeModes.System ? "System" : "")} {(e.IsDark ? "Dark" : "Light")}");
+    }
+
+    void OnLuminanceChanged(LuminanceChangedEventArgs e)
+    {
+        //DemoLogger.WriteLine($"Changed: {(e.Mode == DesignThemeModes.System ? "System" : "")} {(e.IsDark ? "Dark" : "Light")}");
+    }
 }
